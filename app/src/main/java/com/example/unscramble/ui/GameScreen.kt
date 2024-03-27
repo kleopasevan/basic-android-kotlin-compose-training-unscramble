@@ -19,6 +19,7 @@ import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -46,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -80,6 +82,7 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
         GameLayout(
             onUserGuessChanged = { gameViewModel.updateUserGuess(it) },
             wordCount = gameUiState.currentWordCount,
+            lives = gameUiState.lives,
             userGuess = gameViewModel.userGuess,
             onKeyboardDone = { gameViewModel.checkUserGuess() },
             currentScrambledWord = gameUiState.currentScrambledWord,
@@ -123,6 +126,7 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
         if (gameUiState.isGameOver) {
             FinalScoreDialog(
                 score = gameUiState.score,
+                lives = gameUiState.lives,
                 onPlayAgain = { gameViewModel.resetGame() }
             )
         }
@@ -151,7 +155,8 @@ fun GameLayout(
     userGuess: String,
     onUserGuessChanged: (String) -> Unit,
     onKeyboardDone: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    lives: Int
 ) {
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
 
@@ -164,16 +169,34 @@ fun GameLayout(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(mediumPadding)
         ) {
-            Text(
+            Row(
                 modifier = Modifier
-                    .clip(shapes.medium)
-                    .background(colorScheme.surfaceTint)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                    .align(alignment = Alignment.End),
-                text = stringResource(R.string.word_count, wordCount),
-                style = typography.titleMedium,
-                color = colorScheme.onPrimary
-            )
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    modifier = Modifier
+                        .clip(shapes.medium)
+                        .background(Color(0xFF4CAF50))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    text = stringResource(
+                        R.string.lives,
+                        lives
+                    ),
+                    style = typography.titleMedium,
+                    color = colorScheme.onPrimary
+                )
+                Text(
+                    modifier = Modifier
+                        .clip(shapes.medium)
+                        .background(colorScheme.surfaceTint)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    text = stringResource(R.string.word_count, wordCount),
+                    style = typography.titleMedium,
+                    color = colorScheme.onPrimary
+                )
+            }
             Text(
                 text = currentScrambledWord,
                 style = typography.displayMedium
@@ -220,6 +243,7 @@ fun GameLayout(
 private fun FinalScoreDialog(
     score: Int,
     onPlayAgain: () -> Unit,
+    lives: Int,
     modifier: Modifier = Modifier
 ) {
     val activity = (LocalContext.current as Activity)
@@ -230,7 +254,7 @@ private fun FinalScoreDialog(
             // button. If you want to disable that functionality, simply use an empty
             // onCloseRequest.
         },
-        title = { Text(text = stringResource(R.string.congratulations)) },
+        title = { Text(text = if (lives <= 0) stringResource(R.string.game_over) else stringResource(R.string.congratulations) ) },
         text = { Text(text = stringResource(R.string.you_scored, score)) },
         modifier = modifier,
         dismissButton = {
