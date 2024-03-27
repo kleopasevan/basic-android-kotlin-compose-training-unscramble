@@ -75,8 +75,10 @@ class GameViewModel : ViewModel() {
             updateGameState(updatedScore)
         } else {
             // User's guess is wrong, show an error
-            _uiState.update { currentState ->
-                currentState.copy(isGuessedWordWrong = true)
+            val newLives = _uiState.value.lives - 1
+            val gameOver = newLives <= 0 || usedWords.size == MAX_NO_OF_WORDS
+            _uiState.update {
+                it.copy(lives = newLives, isGuessedWordWrong = true, isGameOver = gameOver)
             }
         }
         // Reset user guess
@@ -87,8 +89,14 @@ class GameViewModel : ViewModel() {
      * Skip to next word
      */
     fun skipWord() {
-        updateGameState(_uiState.value.score)
-        // Reset user guess
+        val newLives = _uiState.value.lives - 1
+        val gameOver = newLives <= 0 || _uiState.value.currentWordCount >= MAX_NO_OF_WORDS
+        _uiState.update {
+            it.copy(lives = newLives, isGameOver = gameOver)
+        }
+        if (!gameOver) {
+            updateGameState(_uiState.value.score)
+        }
         updateUserGuess("")
     }
 
